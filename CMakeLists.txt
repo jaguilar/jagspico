@@ -35,6 +35,8 @@ endif()
 
 project(cd74hc595 VERSION 0.0.1 LANGUAGES C CXX ASM)
 
-pico_sdk_init()
+if (NOT target pico_stdlib)
+  pico_sdk_init()
+endif()
 
 add_subdirectory(src)
