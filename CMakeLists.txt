@@ -35,7 +35,7 @@ endif()
 
 project(cd74hc595 VERSION 0.0.1 LANGUAGES C CXX ASM)
 
-if (NOT target pico_stdlib)
+if (NOT TARGET pico_stdlib)
   pico_sdk_init()
 endif()
 
