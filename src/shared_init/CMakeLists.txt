@@ -7,7 +7,7 @@ target_link_libraries(freertos_default
         pico_sync
 )
 
-if(${PICO_BOARD} EQUAL "pico_w")
+if("${PICO_BOARD}" STREQUAL "pico_w")
   add_library(lwip INTERFACE)
   target_link_libraries(lwip
           INTERFACE
@@ -34,7 +34,7 @@ target_link_libraries(common_nonet PUBLIC
     pico_stdlib
     pico_sync
 )
-if(${PICO_BOARD} EQUAL "pico_w")
+if("${PICO_BOARD}" STREQUAL "pico_w")
   target_link_libraries(common_nonet PUBLIC pico_cyw43_arch_none)    
 endif()
 
