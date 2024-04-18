@@ -9,7 +9,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(picobase)
 include(${picobase_SOURCE_DIR}/basic_imports.cmake)
 
-project(cd74hc595 VERSION 0.0.1 LANGUAGES C CXX ASM)
+project(jagspico VERSION 0.0.1 LANGUAGES C CXX ASM)
 
 if (PROJECT_IS_TOP_LEVEL)
   pico_sdk_init()
