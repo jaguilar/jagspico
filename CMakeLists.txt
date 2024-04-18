@@ -7,9 +7,12 @@ FetchContent_Declare(
   GIT_TAG        main
 )
 FetchContent_MakeAvailable(picobase)
+include(${picobase_SOURCE_DIR}/basic_imports.cmake)
 
 project(cd74hc595 VERSION 0.0.1 LANGUAGES C CXX ASM)
 
-pico_sdk_init()
+if (PROJECT_IS_TOP_LEVEL)
+  pico_sdk_init()
+endif()
 
 add_subdirectory(src)
