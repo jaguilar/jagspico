@@ -28,16 +28,19 @@ static uint32_t DigitToMask4(std::array<uint8_t, 4> values,
                              int decimal_position) {
   uint32_t out = 0;
   for (int i = 0; i < 4; ++i) {
+    const int digit_index = 3 - i;  // Note: LSB first.
     const int shl = 24 - i * 8;
-    const uint32_t digit_mask = DigitToMask(values[i], decimal_position == i);
+    const uint32_t digit_mask =
+        DigitToMask(values[i], decimal_position == (3 - i));
     out |= (digit_mask << shl);
-  }  //
+  }
   return out;
 }
 
 Disp4Digit::Disp4Digit(Config&& config)
     : digit_driver_(std::move(config.digit_driver)),
-      pin_select_(config.pin_select) {
+      pin_select_(config.pin_select),
+      callback_(std::move(config.get_content_callback)) {
   for (int i = 0; i < 4; ++i) {
     const uint32_t p = pin_select_ + i;
     gpio_init(p);
@@ -46,47 +49,37 @@ Disp4Digit::Disp4Digit(Config&& config)
     gpio_put(p, true);
   }
 
-  command_queue_ = xQueueCreate(1, sizeof(QueueCommand));
-  digits_mask_ = DigitToMask4({0, 0, 0, 0}, -1);
   auto task_ok = xTaskCreate(
       +[](void* obj) { static_cast<Disp4Digit*>(obj)->DriveTask(); },
       "disp4digit", 256, this, 1, nullptr);
   assert(task_ok == pdPASS);
 }
 
+constexpr EventBits_t kStartShutdown = 0b1;
+constexpr EventBits_t kShutdownFinished = 0b10;
+
 Disp4Digit::~Disp4Digit() {
-  QueueCommand cmd{.shut_down = true};
-  xQueueSend(command_queue_, &cmd, portMAX_DELAY);
-  auto result = xQueueReceive(command_queue_, &cmd, portMAX_DELAY);
-  assert(result == pdTRUE);
-
-  // Safe to delete everything else.
-  vQueueDelete(command_queue_);
-}
-
-void Disp4Digit::Set(std::array<uint8_t, 4> digits, int decimal_position) {
-  QueueCommand cmd{.set_mask = DigitToMask4(digits, decimal_position)};
-  xQueueSend(command_queue_, &cmd, portMAX_DELAY);
+  xEventGroupSetBits(shutdown_event_, kStartShutdown);
+  xEventGroupWaitBits(shutdown_event_, kShutdownFinished, pdTRUE, pdTRUE,
+                      portMAX_DELAY);
+  vEventGroupDelete(shutdown_event_);
 }
 
 void Disp4Digit::DriveTask() {
   uint32_t prev_pin = pin_select_;
   while (true) {
-    for (int i = 0; i < 4; ++i) {
-      QueueCommand cmd;
-      // We wait up to 5ms between selecting new digits.
-      if (xQueueReceive(command_queue_, &cmd, pdMS_TO_TICKS(2)) == pdTRUE) {
-        if (cmd.shut_down) {
-          // Pong the command back. We are promising not to touch *this sending
-          // this command.
-          xQueueSend(command_queue_, &cmd, portMAX_DELAY);
-          vTaskDelete(nullptr);
-          return;
-        }
-        digits_mask_ = cmd.set_mask;
-        break;  // Restart the process of printing a new number.
-      }
+    if (xEventGroupGetBits(shutdown_event_) == kStartShutdown) {
+      xEventGroupSetBits(shutdown_event_, kShutdownFinished);
+    }
 
+    const DisplayValue value = callback_();
+    const std::array<uint8_t, 4> digits = {
+        static_cast<uint8_t>(value.digits / 1000 % 10),
+        static_cast<uint8_t>(value.digits / 100 % 10),
+        static_cast<uint8_t>(value.digits / 10 % 10),
+        static_cast<uint8_t>(value.digits % 10)};
+    const uint32_t digits_mask_ = DigitToMask4(digits, value.decimal_position);
+    for (int i = 0; i < 4; ++i) {
       gpio_put(prev_pin, true);  // Unselect the previous selection pin.
       const uint32_t pin = pin_select_ + i;
       gpio_put(
@@ -94,6 +87,7 @@ void Disp4Digit::DriveTask() {
           false);  // Drive the selected pin low to begin receiving current.
       prev_pin = pin;
       digit_driver_.Send(digits_mask_ >> ((3 - i) * 8) & 0xff);
+      vTaskDelay(pdMS_TO_TICKS(1));
     }
   }
 }

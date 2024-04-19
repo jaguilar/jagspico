@@ -1,4 +1,4 @@
-#include "cd74hc595.h"
+#include "jagspico/cd74hc595.h"
 
 #include "cd74hc595.pio.h"
 #include "hardware/clocks.h"

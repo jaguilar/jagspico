@@ -1,5 +1,5 @@
-#ifndef CD74HC595_H
-#define CD74HC595_H
+#ifndef JAGSPICO_CD74HC595_H
+#define JAGSPICO_CD74HC595_H
 
 #include <cstdint>
 #include <optional>
@@ -9,10 +9,10 @@
 namespace jagspico {
 
 class Cd74Hc595DriverPio {
-public:
+ public:
   struct Config {
     PIO pio;
-    int pin_srclk = -1; // Note: pin_rclk must be pin_srclk + 1.
+    int pin_srclk = -1;  // Note: pin_rclk must be pin_srclk + 1.
     int pin_ser = -1;
     uint32_t target_frequency = 1'000'000;
 
@@ -41,9 +41,10 @@ public:
 
   uint32_t state_machine() const { return state_machine_; }
 
-private:
+ private:
   Cd74Hc595DriverPio(const Config &config, uint32_t state_machine)
-      : pio_{config.pio}, state_machine_{state_machine},
+      : pio_{config.pio},
+        state_machine_{state_machine},
         output_bits_(config.output_bits) {}
 
   PIO pio_;
@@ -51,6 +52,6 @@ private:
   int output_bits_;
 };
 
-} // namespace jagspico
+}  // namespace jagspico
 
-#endif // CD74HC595_H
+#endif  // JAGSPICO_CD74HC595_H
