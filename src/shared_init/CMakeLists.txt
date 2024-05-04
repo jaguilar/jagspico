@@ -11,7 +11,7 @@ if("${PICO_BOARD}" STREQUAL "pico_w")
   add_library(lwip INTERFACE)
   target_link_libraries(lwip
           INTERFACE
-          lwipopts pico_cyw43_arch_lwip_sys_freertos pico_lwip_api
+          lwip_config pico_cyw43_arch_lwip_sys_freertos pico_lwip_api
           pico_lwip_core pico_lwip_freertos pico_lwip_mdns)
 else()  
   add_library(lwip INTERFACE)
