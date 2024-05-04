@@ -1,0 +1,4 @@
+add_library(jagsarduino Arduino.cc)
+target_compile_features(jagsarduino PUBLIC cxx_std_23)
+target_link_libraries(jagsarduino PRIVATE pico_stdlib hardware_gpio freertos_default)
+target_include_directories(jagsarduino SYSTEM PUBLIC include)

@@ -6,6 +6,7 @@ target_link_libraries(freertos_default
         FreeRTOS-Kernel-Heap4
         pico_sync
 )
+target_compile_options(freertos_default INTERFACE -DUSE_FREERTOS=1)
 
 if("${PICO_BOARD}" STREQUAL "pico_w")
   add_library(lwip INTERFACE)
