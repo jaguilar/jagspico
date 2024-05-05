@@ -1,10 +1,11 @@
-add_library(freertos_default INTERFACE)
+add_library(freertos_default freertos_common.cc)
 target_link_libraries(freertos_default
-        INTERFACE
+        PUBLIC
         FreeRTOS-Kernel
         freertos_config
         FreeRTOS-Kernel-Heap4
         pico_sync
+        pico_stdlib
 )
 target_compile_options(freertos_default INTERFACE -DUSE_FREERTOS=1)
 
@@ -18,7 +19,7 @@ else()
   add_library(lwip INTERFACE)
 endif()
 
-add_library(common STATIC shared_init.c)
+add_library(common STATIC shared_init.cc)
 target_link_libraries(common PUBLIC
     freertos_default
     lwip
@@ -29,7 +30,7 @@ target_compile_options(
     common 
     PRIVATE -DWIFI_PASSWORD="${WIFI_PASSWORD}" -DWIFI_SSID="${WIFI_SSID}" -DCYW43_HOST_NAME="${WIFI_HOSTNAME}")
 
-add_library(common_nonet STATIC shared_init.c)
+add_library(common_nonet STATIC shared_init.cc)
 target_link_libraries(common_nonet PUBLIC
     freertos_default
     pico_stdlib
