@@ -30,11 +30,19 @@ public:
     printf(format_str.data(), n);
   }
   static void println(std::string_view s);
+  template <typename Integer>
+  static void println(Integer n, PrintFormat format = DECIMAL) {
+    std::string_view format_str = format == DECIMAL ? "%d\n" : "%x\n";
+    printf(format_str.data(), format);
+  }
   static void println();
 };
 extern SerialClass Serial;
 
 // Delays for milliseconds.
 void delay(uint32_t ms);
+
+// Delays for microseconds.
+void delayMicroseconds(uint32_t us);
 
 #endif // JAGSPICO_ARDUINO_H

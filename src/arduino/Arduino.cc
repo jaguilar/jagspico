@@ -2,6 +2,7 @@
 
 #include "FreeRTOS.h"
 #include "hardware/gpio.h"
+#include "pico/time.h"
 #include "task.h"
 
 void pinMode(int pin, PinMode mode) {
@@ -32,4 +33,12 @@ bool String::equalsIgnoreCase(std::string_view s) const {
                     [](char a, char b) { return tolower(a) == tolower(b); });
 }
 
-void delay(uint32_t ms) { vTaskDelay(pdMS_TO_TICKS(ms)); }
+void delay(uint32_t ms) {
+  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+    vTaskDelay(pdMS_TO_TICKS(ms));
+  } else {
+    sleep_ms(ms);
+  }
+}
+
+void delayMicroseconds(uint32_t us) { sleep_us(us); }
