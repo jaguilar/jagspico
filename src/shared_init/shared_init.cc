@@ -3,6 +3,7 @@
 #include <FreeRTOS.h>
 
 #include "FreeRTOSConfig.h"
+#include "pico/platform.h"
 #ifdef RASPBERRYPI_PICO_W
 #include "cyw43_country.h"
 #include "cyw43_ll.h"
@@ -47,8 +48,7 @@ static void init_task(void *arg) {
 
 #ifdef RASPBERRYPI_PICO_W
   if (cyw43_arch_init_with_country(CYW43_COUNTRY_USA)) {
-    printf("Wi-Fi init failed");
-    WaitForeverInCriticalSection();
+    panic("Wi-Fi init failed\n");
   }
   printf("wifi init done\n");
 #if CYW43_LWIP
