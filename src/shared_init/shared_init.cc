@@ -25,6 +25,41 @@
 
 extern "C" {
 
+#if configSUPPORT_STATIC_ALLOCATION == 1
+// Copied from the FreeRTOS docs.
+void vApplicationGetIdleTaskMemory(
+    StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer,
+    configSTACK_DEPTH_TYPE *puxIdleTaskStackSize) {
+  static StaticTask_t xIdleTaskTCB;
+  static StackType_t uxIdleTaskStack[configMINIMAL_STACK_SIZE];
+  *ppxIdleTaskTCBBuffer = &xIdleTaskTCB;
+  *ppxIdleTaskStackBuffer = uxIdleTaskStack;
+  *puxIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+}
+
+void vApplicationGetTimerTaskMemory(
+    StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer,
+    configSTACK_DEPTH_TYPE *puxTimerTaskStackSize) {
+  static StaticTask_t xTimerTaskTCB;
+  static StackType_t uxTimerTaskStack[configTIMER_TASK_STACK_DEPTH];
+  *ppxTimerTaskTCBBuffer = &xTimerTaskTCB;
+  *ppxTimerTaskStackBuffer = uxTimerTaskStack;
+  *puxTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
+}
+
+void vApplicationGetPassiveIdleTaskMemory(
+    StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer,
+    configSTACK_DEPTH_TYPE *puxIdleTaskStackSize,
+    BaseType_t xPassiveIdleTaskIndex) {
+  static StaticTask_t xIdleTaskTCBs[configNUMBER_OF_CORES - 1];
+  static StackType_t uxIdleTaskStacks[configNUMBER_OF_CORES - 1]
+                                     [configMINIMAL_STACK_SIZE];
+  *ppxIdleTaskTCBBuffer = &(xIdleTaskTCBs[xPassiveIdleTaskIndex]);
+  *ppxIdleTaskStackBuffer = &(uxIdleTaskStacks[xPassiveIdleTaskIndex][0]);
+  *puxIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+}
+#endif
+
 static TaskHandle_t g_init_task;
 
 #if LWIP_MDNS_RESPONDER
@@ -63,9 +98,11 @@ static void init_task(void *arg) {
           WIFI_SSID,
           WIFI_PASSWORD,
           error);
+    } else {
+      printf("wifi connected\n");
     }
   }
-  printf("wifi connected\n");
+
   for (int i = 0; i < 3; ++i) {
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
     vTaskDelay(pdMS_TO_TICKS(100));
