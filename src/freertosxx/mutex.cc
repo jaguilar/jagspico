@@ -1,6 +1,6 @@
 #include "freertosxx/mutex.h"
 
-namespace jagspico {
+namespace freertosxx {
 
 Mutex::Mutex() { mutex_ = xSemaphoreCreateMutexStatic(&storage_); }
 
@@ -9,4 +9,4 @@ Mutex::~Mutex() {
   vSemaphoreDelete(mutex_);
 }
 
-}  // namespace jagspico
+}  // namespace freertosxx
