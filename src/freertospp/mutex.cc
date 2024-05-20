@@ -1,8 +1,8 @@
-#include "jagspico/mutex.h"
+#include "freertospp/mutex.h"
 
 namespace jagspico {
 
-Mutex::Mutex() { mutex_ = xSemaphoreCreateMutex(); }
+Mutex::Mutex() { mutex_ = xSemaphoreCreateMutexStatic(&storage_); }
 
 Mutex::~Mutex() {
   configASSERT(xSemaphoreGetMutexHolder(mutex_) == NULL);

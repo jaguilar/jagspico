@@ -31,7 +31,8 @@ class Mutex {
   }
 
  private:
-  QueueHandle_t mutex_;
+  StaticSemaphore_t storage_;
+  SemaphoreHandle_t mutex_;
 };
 
 class MutexLock {
