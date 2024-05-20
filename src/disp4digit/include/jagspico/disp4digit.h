@@ -22,6 +22,10 @@ class Disp4Digit {
   struct DisplayValue {
     uint16_t digits;
     uint8_t decimal_position;
+    bool off = false;  // If true, turn off all segments.
+
+    static DisplayValue FromFloat(float f);
+    static DisplayValue FromInt(int i);
   };
 
   struct Config {

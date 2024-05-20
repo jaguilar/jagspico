@@ -1,6 +1,7 @@
 #include "disp4digit.h"
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <utility>
@@ -11,6 +12,21 @@
 #include "task.h"
 
 namespace jagspico {
+
+Disp4Digit::DisplayValue Disp4Digit::DisplayValue::FromFloat(float f) {
+  assert(f >= 0 && f <= 9999);
+  const int log10 = static_cast<int>(std::floor(std::log10(f)));
+  const uint8_t decimal_pos = 3 - log10;
+  const uint16_t digits =
+      static_cast<uint16_t>(std::round(f * std::pow(10, decimal_pos)));
+  return DisplayValue{.digits = digits, .decimal_position = decimal_pos};
+}
+
+Disp4Digit::DisplayValue Disp4Digit::DisplayValue::FromInt(int i) {
+  assert(i >= 0 && i <= 9999);
+  return DisplayValue{.digits = static_cast<uint16_t>(i),
+                      .decimal_position = 0};
+}
 
 static uint8_t DigitToMask(uint8_t digit, bool decimal_after) {
   if (digit > 9) {
@@ -82,9 +98,8 @@ void Disp4Digit::DriveTask() {
     for (int i = 0; i < 4; ++i) {
       gpio_put(prev_pin, true);  // Unselect the previous selection pin.
       const uint32_t pin = pin_select_ + i;
-      gpio_put(
-          pin,
-          false);  // Drive the selected pin low to begin receiving current.
+      // If !off, drive the pin low to allow current to flow.
+      gpio_put(pin, !value.off);
       prev_pin = pin;
       digit_driver_.Send(digits_mask_ >> ((3 - i) * 8) & 0xff);
       vTaskDelay(pdMS_TO_TICKS(1));
