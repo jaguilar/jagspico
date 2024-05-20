@@ -24,10 +24,32 @@ class Mutex {
     configASSERT(result == pdTRUE);
   }
 
+  bool TryLock() { return pdTRUE == xSemaphoreTake(mutex_, 0); }
+
+  bool LockWithTimeout(int ms) {
+    return pdTRUE == xSemaphoreTake(mutex_, pdMS_TO_TICKS(ms));
+  }
+
   void Unlock() {
     configASSERT(xSemaphoreGetMutexHolder(mutex_) ==
                  xTaskGetCurrentTaskHandle());
     xSemaphoreGive(mutex_);
+  }
+
+  bool LockFromISR(bool& higher_priority_task_woken) {
+    BaseType_t higher_priority_task_woken_raw = pdFALSE;
+    const bool result = pdTRUE == xSemaphoreTakeFromISR(
+                                      mutex_, &higher_priority_task_woken_raw);
+    higher_priority_task_woken = pdTRUE == higher_priority_task_woken_raw;
+    return result;
+  }
+
+  void UnlockFromISR(bool& higher_priority_task_woken) {
+    BaseType_t higher_priority_task_woken_raw = pdFALSE;
+    configASSERT(xSemaphoreGetMutexHolder(mutex_) ==
+                 xTaskGetCurrentTaskHandle());
+    xSemaphoreGiveFromISR(mutex_, &higher_priority_task_woken_raw);
+    higher_priority_task_woken = pdTRUE == higher_priority_task_woken_raw;
   }
 
  private:
