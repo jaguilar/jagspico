@@ -1,3 +1,0 @@
-add_library(freertospp mutex.cc)
-target_link_libraries(freertospp PRIVATE FreeRTOS-Kernel freertos_config)
-target_include_directories(freertospp PUBLIC include)

@@ -7,7 +7,7 @@
 #include "projdefs.h"
 #include "semphr.h"
 
-namespace jagspico {
+namespace freertosxx {
 
 // Wraps a FreeRTOS mutex in an ABSL-like interface.
 class Mutex {
@@ -48,6 +48,6 @@ class MutexLock {
   Mutex& mutex_;
 };
 
-}  // namespace jagspico
+}  // namespace freertosxx
 
 #endif  // JAGSPICO_UTIL_MUTEX_H
