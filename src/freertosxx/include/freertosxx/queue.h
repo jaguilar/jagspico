@@ -30,6 +30,8 @@ class UntypedQueue {
     configASSERT(result == pdTRUE);
   }
 
+  bool TrySend(const void* item) { return SendWithTimeout(item, 0); }
+
   bool SendWithTimeout(const void* item, int ms) {
     return pdTRUE == xQueueSend(queue_, item, pdMS_TO_TICKS(ms));
   }
@@ -63,12 +65,14 @@ class Queue : public UntypedQueue {
       "T must be a POD type");
   Queue(QueueHandle_t queue) : UntypedQueue(queue) {}
 
-  void Send(const T& item) { Send(reinterpret_cast<const void*>(&item)); }
+  void Send(const T& item) { UntypedQueue::Send(&item); }
+  bool TrySend(const T& item) { return UntypedQueue::TrySend(&item); }
   void SendWithTimeout(int ms, const T& item) {
-    SendWithTimeout(reinterpret_cast<const void*>(&item), ms);
+    UntypedQueue::SendWithTimeout(&item, ms);
   }
   bool SendFromISR(const T& item, bool& higher_priority_task_woken) {
-    return pdTRUE == SendFromISR(&item, higher_priority_task_woken);
+    return pdTRUE ==
+           UntypedQueue::SendFromISR(&item, higher_priority_task_woken);
   }
   T Receive() {
     T t;
@@ -77,7 +81,7 @@ class Queue : public UntypedQueue {
   }
   T ReceiveWithTimeout(int ms) {
     T t;
-    ReceiveWithTimeout(reinterpret_cast<void*>(&t), ms);
+    UntypedQueue::ReceiveWithTimeout(reinterpret_cast<void*>(&t), ms);
     return t;
   }
 };
