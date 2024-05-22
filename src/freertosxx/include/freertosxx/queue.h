@@ -1,22 +1,21 @@
 #ifndef FREERTOSXX_QUEUE_H
 #define FREERTOSXX_QUEUE_H
 
+#include <type_traits>
 #include "FreeRTOS.h"
 #include "freertosxx/mutex.h"
 #include "portmacro.h"
 #include "projdefs.h"
 namespace freertosxx {
 
-template <size_t length, size_t itemsize>
-class QueueStaticBase {
+class UntypedQueue {
  public:
-  QueueStaticBase()
-      : queue_(xQueueCreateStatic(length, itemsize, buf_, &storage_)) {}
-  virtual ~QueueStaticBase() {}
-  QueueStaticBase(const QueueStaticBase&) = delete;
-  QueueStaticBase(QueueStaticBase&&) = delete;
-  QueueStaticBase& operator=(const QueueStaticBase&) = delete;
-  QueueStaticBase& operator=(QueueStaticBase&&) = delete;
+  UntypedQueue(QueueHandle_t queue) : queue_(queue) {}
+  ~UntypedQueue() { vQueueDelete(queue_); }
+  UntypedQueue(const UntypedQueue&) = delete;
+  UntypedQueue(UntypedQueue&&) = delete;
+  UntypedQueue& operator=(const UntypedQueue&) = delete;
+  UntypedQueue& operator=(UntypedQueue&&) = delete;
 
   void Drain() {
     while (uxQueueMessagesWaiting(queue_) > 0) {
@@ -54,17 +53,15 @@ class QueueStaticBase {
   }
 
   QueueHandle_t queue_;
-
- private:
-  StaticQueue_t storage_;
-  uint8_t buf_[length * itemsize];
 };
 
-template <typename T, size_t length>
-class Queue : public QueueStaticBase<length, sizeof(T)> {
+template <typename T>
+class Queue : public UntypedQueue {
  public:
-  Queue() = default;
-  virtual ~Queue() = default;
+  static_assert(
+      std::is_trivial_v<T> && std::is_standard_layout_v<T>,
+      "T must be a POD type");
+  Queue(QueueHandle_t queue) : UntypedQueue(queue) {}
 
   void Push(const T& item) { Push(reinterpret_cast<const void*>(&item)); }
   void PushWithTimeout(int ms, const T& item) {
@@ -83,6 +80,23 @@ class Queue : public QueueStaticBase<length, sizeof(T)> {
     PopWithTimeout(reinterpret_cast<void*>(&t), ms);
     return t;
   }
+};
+
+template <typename T>
+class RTOSDynamicQueue : public Queue<T> {
+ public:
+  RTOSDynamicQueue(int size) : Queue<T>(xQueueCreate(size, sizeof(T))) {}
+};
+
+template <typename T, int Size>
+class RTOSStaticQueue : public Queue<T> {
+ public:
+  RTOSStaticQueue()
+      : Queue<T>(xQueueCreateStatic(Size, sizeof(T), buf_, &queue_)) {}
+
+ private:
+  StaticQueue_t queue_;
+  uint8_t buf_[Size * sizeof(T)];
 };
 
 }  // namespace freertosxx
