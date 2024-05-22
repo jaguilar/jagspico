@@ -20,21 +20,21 @@ class UntypedQueue {
   void Drain() {
     while (uxQueueMessagesWaiting(queue_) > 0) {
       void* item;
-      Pop(&item);
+      Receive(&item);
     }
   }
 
  protected:
-  void Push(const void* item) {
+  void Send(const void* item) {
     auto result = xQueueSend(queue_, item, portMAX_DELAY);
     configASSERT(result == pdTRUE);
   }
 
-  bool PushWithTimeout(const void* item, int ms) {
+  bool SendWithTimeout(const void* item, int ms) {
     return pdTRUE == xQueueSend(queue_, item, pdMS_TO_TICKS(ms));
   }
 
-  bool PushFromISR(const void* item, bool& higher_priority_task_woken) {
+  bool SendFromISR(const void* item, bool& higher_priority_task_woken) {
     BaseType_t higher_priority_task_woken_raw = pdFALSE;
     const bool result =
         pdTRUE ==
@@ -43,12 +43,12 @@ class UntypedQueue {
     return result;
   }
 
-  void Pop(void* item) {
+  void Receive(void* item) {
     auto result = xQueueReceive(queue_, item, portMAX_DELAY);
     configASSERT(result == pdTRUE);
   }
 
-  bool PopWithTimeout(void* item, int ms) {
+  bool ReceiveWithTimeout(void* item, int ms) {
     return pdTRUE == xQueueReceive(queue_, item, pdMS_TO_TICKS(ms));
   }
 
@@ -63,21 +63,21 @@ class Queue : public UntypedQueue {
       "T must be a POD type");
   Queue(QueueHandle_t queue) : UntypedQueue(queue) {}
 
-  void Push(const T& item) { Push(reinterpret_cast<const void*>(&item)); }
-  void PushWithTimeout(int ms, const T& item) {
-    PushWithTimeout(reinterpret_cast<const void*>(&item), ms);
+  void Send(const T& item) { Send(reinterpret_cast<const void*>(&item)); }
+  void SendWithTimeout(int ms, const T& item) {
+    SendWithTimeout(reinterpret_cast<const void*>(&item), ms);
   }
-  bool PushFromISR(const T& item, bool& higher_priority_task_woken) {
-    return pdTRUE == PushFromISR(&item, higher_priority_task_woken);
+  bool SendFromISR(const T& item, bool& higher_priority_task_woken) {
+    return pdTRUE == SendFromISR(&item, higher_priority_task_woken);
   }
-  T Pop() {
+  T Receive() {
     T t;
-    UntypedQueue::Pop(reinterpret_cast<void*>(&t));
+    UntypedQueue::Receive(reinterpret_cast<void*>(&t));
     return t;
   }
-  T PopWithTimeout(int ms) {
+  T ReceiveWithTimeout(int ms) {
     T t;
-    PopWithTimeout(reinterpret_cast<void*>(&t), ms);
+    ReceiveWithTimeout(reinterpret_cast<void*>(&t), ms);
     return t;
   }
 };
