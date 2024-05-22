@@ -72,7 +72,7 @@ class Queue : public UntypedQueue {
   }
   T Pop() {
     T t;
-    QueueStaticBase<length, sizeof(T)>::Pop(reinterpret_cast<void*>(&t));
+    UntypedQueue::Pop(reinterpret_cast<void*>(&t));
     return t;
   }
   T PopWithTimeout(int ms) {
