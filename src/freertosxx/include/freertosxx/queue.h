@@ -83,15 +83,15 @@ class Queue : public UntypedQueue {
 };
 
 template <typename T>
-class RTOSDynamicQueue : public Queue<T> {
+class DynamicQueue : public Queue<T> {
  public:
-  RTOSDynamicQueue(int size) : Queue<T>(xQueueCreate(size, sizeof(T))) {}
+  DynamicQueue(int size) : Queue<T>(xQueueCreate(size, sizeof(T))) {}
 };
 
 template <typename T, int Size>
-class RTOSStaticQueue : public Queue<T> {
+class StaticQueue : public Queue<T> {
  public:
-  RTOSStaticQueue()
+  StaticQueue()
       : Queue<T>(xQueueCreateStatic(Size, sizeof(T), buf_, &queue_)) {}
 
  private:
