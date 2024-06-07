@@ -28,7 +28,7 @@ target_link_libraries(common PUBLIC
 )
 target_compile_options(
     common 
-    PRIVATE -DWIFI_PASSWORD="${WIFI_PASSWORD}" -DWIFI_SSID="${WIFI_SSID}" -DCYW43_HOST_NAME="${WIFI_HOSTNAME}")
+    PRIVATE -DWIFI_PASSWORD="$ENV{WIFI_PASSWORD}" -DWIFI_SSID="$ENV{WIFI_SSID}" -DCYW43_HOST_NAME="${WIFI_HOSTNAME}")
 
 add_library(common_nonet STATIC shared_init.cc)
 target_link_libraries(common_nonet PUBLIC
