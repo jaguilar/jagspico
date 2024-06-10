@@ -135,6 +135,8 @@ class Borrowable {
 
   Borrowable(Borrowable<T>&& o) = default;
   Borrowable& operator=(Borrowable<T>&& o) = default;
+  Borrowable(Borrowable<T>& o) = default;
+  Borrowable& operator=(Borrowable<T>& o) = default;
 
   // Borrows the resource. Waits until the resource is available.
   BorrowedPointer<T> Borrow() {
