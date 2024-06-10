@@ -99,11 +99,17 @@ class BorrowedPointer {
   template <typename U>
   BorrowedPointer<T>& operator==(BorrowedPointer<U>&& o) {
     static_assert(std::is_convertible_v<U*, T*>);
-    value_ = o.value_;
-    mutex_ = o.mutex_;
-    o.mutex_ = nullptr;
+    if (mutex_ != nullptr) mutex_->Unlock();
+    value_ = std::exchange(o.value_, nullptr);
+    mutex_ = std::exchange(o.mutex_, nullptr);
   }
-  ~BorrowedPointer() { mutex_->Unlock(); }
+
+  BorrowedPointer(const BorrowedPointer<T>&) = delete;
+  BorrowedPointer& operator=(const BorrowedPointer<T>&) = delete;
+
+  ~BorrowedPointer() {
+    if (mutex_ != nullptr) mutex_->Unlock();
+  }
 
   T* operator->() {
     configASSERT(mutex_ != nullptr);
@@ -114,8 +120,13 @@ class BorrowedPointer {
     return *value_;
   }
 
-  T* value_;
-  Mutex* mutex_;
+  operator bool() const { return mutex_ != nullptr; }
+
+  void release() { *this = {nullptr, nullptr}; }
+
+ private:
+  T* value_ = nullptr;
+  Mutex* mutex_ = nullptr;
 };
 
 // Significantly inspired by Pigweed, but probably a little less flexible.
@@ -135,8 +146,8 @@ class Borrowable {
 
   Borrowable(Borrowable<T>&& o) = default;
   Borrowable& operator=(Borrowable<T>&& o) = default;
-  Borrowable(Borrowable<T>& o) = default;
-  Borrowable& operator=(Borrowable<T>& o) = default;
+  Borrowable(const Borrowable<T>& o) = default;
+  Borrowable& operator=(const Borrowable<T>& o) = default;
 
   // Borrows the resource. Waits until the resource is available.
   BorrowedPointer<T> Borrow() {
