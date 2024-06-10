@@ -18,7 +18,12 @@ namespace homeassistant {
 
 class JsonBuilder {
  public:
-  JsonBuilder(std::string& json) : json_(json) {}
+  JsonBuilder() { json_.append("{"); }
+
+  std::string Finish() && {
+    json_.append("}");
+    return std::move(json_);
+  }
 
   void Kv(std::string_view key, std::string_view value) {
     Key(key);
@@ -64,7 +69,7 @@ class JsonBuilder {
     json_.append("\": ");
   }
 
-  std::string& json_;
+  std::string json_;
   bool want_sep = false;
 };
 
