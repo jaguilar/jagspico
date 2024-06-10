@@ -16,6 +16,59 @@
 
 namespace homeassistant {
 
+class JsonBuilder {
+ public:
+  JsonBuilder(std::string& json) : json_(json) {}
+
+  void Kv(std::string_view key, std::string_view value) {
+    Key(key);
+    json_.append("\"");
+    json_.append(value);
+    json_.append("\"");
+    want_sep = true;
+  }
+
+  void Kv(std::string_view key, double number) {
+    Key(key);
+    json_.append(std::to_string(number));
+    want_sep = true;
+  }
+
+  void Kv(std::string_view key, bool b) {
+    Key(key);
+    json_.append(b ? "true" : "false");
+    want_sep = true;
+  }
+
+  template <typename T>
+  void KvIf(std::string_view key, const std::optional<T>& value) {
+    if (value) Kv(key, *value);
+  }
+
+  auto EnterDict(std::string_view key) {
+    Key(key);
+    want_sep = false;
+    return jagspico::Cleanup([&] { ExitDict(); });
+  }
+
+  void ExitDict() {
+    json_.append("}");
+    want_sep = true;
+  }
+
+ private:
+  void Key(std::string_view key) {
+    if (want_sep) json_.append(", ");
+    json_.append("\"");
+    json_.append(key);
+    json_.append("\": ");
+  }
+
+  std::string& json_;
+  bool want_sep = false;
+};
+
+
 class Device {
  public:
   // Returns a discovery message for the device.
