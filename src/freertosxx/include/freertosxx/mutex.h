@@ -80,6 +80,9 @@ class MutexLock {
   Mutex& mutex_;
 };
 
+template <typename T>
+class Borrowable;
+
 // This type contains a resource and a mutex that protects it. The mutex is
 // already locked, and destroying the instance of this class will unlock it.
 // Therefore, while this class exists, the underlying resource can be safely
@@ -123,6 +126,12 @@ class BorrowedPointer {
   operator bool() const { return mutex_ != nullptr; }
 
   void release() { *this = {nullptr, nullptr}; }
+
+  template <typename U>
+  operator Borrowable<U>() {
+    static_assert(std::is_convertible_v<T*, U*>);
+    return Borrowable<U>(value_, mutex_);
+  }
 
  private:
   T* value_ = nullptr;
