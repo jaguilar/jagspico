@@ -178,6 +178,16 @@ class Borrowable {
   Mutex* mutex_;
 };
 
+// A Borrowable object that owns its own mutex.
+template <class T>
+class IntrusiveBorrowable : public Borrowable<T> {
+ public:
+  IntrusiveBorrowable() : Borrowable<T>(this, &mutex_) {}
+
+ private:
+  Mutex mutex_;
+};
+
 // A borrowable that owns the resource.
 template <typename T>
 class OwnerBorrowable {
