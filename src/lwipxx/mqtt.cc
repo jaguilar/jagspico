@@ -193,13 +193,11 @@ bool MqttClient::TopicMatchesSubscription(
   return true;
 }
 
-void MqttClient::ChangeTopic(std::string_view topic, int num_messages) {
-  MQTTDBG("ChangeTopic(%*s, %d)\n", topic.size(), topic.data(), num_messages);
+void MqttClient::ChangeTopic(std::string_view topic, int total_length) {
+  MQTTDBG("ChangeTopic(%*s, %d)\n", topic.size(), topic.data(), total_length);
   freertosxx::MutexLock l(mutex_);
   current_topic_ = topic;
-  remaining_messages_ = num_messages;
   if (current_topic_.empty()) {
-    assert(remaining_messages_ == 0);
     return;
   }
   for (int i = 0; i < handlers_.size(); ++i) {
@@ -212,12 +210,18 @@ void MqttClient::ChangeTopic(std::string_view topic, int num_messages) {
 
 void MqttClient::ReceiveMessage(
     std::span<const uint8_t> message, uint8_t flags) {
+  if (!(flags & MQTT_DATA_FLAG_LAST) || !pending_message_.empty()) {
+    pending_message_.append(message.begin(), message.end());
+  }
+
   if (active_handler_) {
-    Message m{
-        current_topic_,
-        std::string_view(
-            reinterpret_cast<const char*>(message.data()), message.size()),
-        flags};
+    const std::string_view data =
+        !pending_message_.empty()
+            ? pending_message_
+            : std::string_view{
+                  reinterpret_cast<const char*>(message.data()),
+                  message.size()};
+    Message m{current_topic_, data, flags};
     MQTTDBG(
         "ReceiveMessage(%*s%s, %c)\n",
         std::min<int>(10, m.topic.size()),
@@ -225,12 +229,9 @@ void MqttClient::ReceiveMessage(
         m.topic.size() > 10 ? "..." : "",
         m.flags);
     active_handler_(std::move(m));
+    pending_message_.clear();
   } else {
     MQTTDBG("ReceiveMessage(): No active handler for message\n");
-  }
-  if (--remaining_messages_ == 0) {
-    MQTTDBG("Topic complete\n");
-    active_handler_ = {};
   }
 }
 
