@@ -80,7 +80,6 @@ class MqttClient {
 
   // Only accessed from the callback thread. Thus not guarded by a lock.
   std::string_view current_topic_;
-  int remaining_messages_;
 
   // We check the topic for which handler should handle the message at the
   // beginning of the topic. This way, we can call the handler function without
@@ -90,6 +89,8 @@ class MqttClient {
   freertosxx::Mutex mutex_;  // Guards handlers_ and active_handler_index_.
   std::vector<std::pair<std::string, DataHandler>> handlers_;
   DataHandler active_handler_;
+
+  std::string pending_message_;
 };
 
 }  // namespace lwipxx
