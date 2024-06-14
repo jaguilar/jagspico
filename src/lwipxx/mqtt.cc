@@ -45,7 +45,6 @@ std::expected<std::unique_ptr<MqttClient>, err_t> MqttClient::Create(
 MqttClient::~MqttClient() {
   LOCK_TCPIP_CORE();
   mqtt_disconnect(client_.get());
-  mqtt_client_free(client_.get());
   UNLOCK_TCPIP_CORE();
 }
 
@@ -81,6 +80,7 @@ void MqttClient::ConnectionCb(const mqtt_connection_status_t& status) {
 }
 
 void MqttClient::Connect() {
+  LOCK_TCPIP_CORE();
   mqtt_connect_client_info_t connect_info{
       .client_id = connect_info_.client_id.c_str(),
       .client_user = connect_info_.user.c_str(),
@@ -103,6 +103,7 @@ void MqttClient::Connect() {
   if (err != ERR_OK) {
     WithBackoff(connect_failures_, [this] { Connect(); });
   }
+  UNLOCK_TCPIP_CORE();
 }
 
 err_t MqttClient::Publish(
