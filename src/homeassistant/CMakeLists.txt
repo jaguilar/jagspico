@@ -1,6 +1,6 @@
 add_library(homeassistant homeassistant.cc)
 target_compile_features(homeassistant PRIVATE cxx_std_23)
-target_link_libraries(homeassistant PUBLIC lwipxx_mqtt jagspico_util)
+target_link_libraries(homeassistant PUBLIC lwipxx_mqtt jagspico_util pico_unique_id)
 target_include_directories(homeassistant PUBLIC include)
 
 add_pico_executable(homeassistant_printf_test test.cc) 
