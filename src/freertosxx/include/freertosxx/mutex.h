@@ -203,12 +203,12 @@ class OwnerBorrowable {
   OwnerBorrowable(OwnerBorrowable<T>&& o) = default;
   OwnerBorrowable& operator=(OwnerBorrowable<T>&& o) = default;
 
-  operator Borrowable<T>() { return Borrowable<T>(value_.get(), &mutex_); }
+  operator Borrowable<T>() { return Borrowable<T>(&value_, &mutex_); }
 
   // Borrows the resource. Waits until the resource is available.
   BorrowedPointer<T> Borrow() {
     mutex_.Lock();
-    return BorrowedPointer<T>(value_, mutex_);
+    return BorrowedPointer<T>(&value_, &mutex_);
   }
 
   // Tries to borrow the resource. If it can't be borrowed by the time
@@ -217,11 +217,11 @@ class OwnerBorrowable {
     if (!mutex_.LockWithTimeout(ms)) {
       return std::nullopt;
     }
-    return BorrowedPointer<T>(value_, mutex_);
+    return BorrowedPointer<T>(&value_, &mutex_);
   }
 
  private:
-  std::unique_ptr<T> value_;
+  T value_;
   Mutex mutex_;
 };
 
