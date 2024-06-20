@@ -45,10 +45,13 @@ class MqttClient {
 
   ~MqttClient();
 
-  // Publishes message on topic. Returns only when the message has been
-  // acknowledged by the broker, or an error has occurred.
+  // Publishes message on topic. Returns immediately without waiting for
+  // the publish to be acknowledged by the broker. You may provide
+  // publish_result which will be called with the result of the Publish request.
+  // publish_result will only be called when this call returns ERR_OK.
   [[nodiscard]] err_t Publish(
-      std::string_view topic, std::string_view message, Qos qos, bool retain);
+      std::string_view topic, std::string_view message, Qos qos, bool retain,
+      std::function<void(err_t)> publish_result = nullptr);
 
   struct Message {
     std::string_view topic;

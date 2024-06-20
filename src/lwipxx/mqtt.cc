@@ -107,11 +107,17 @@ void MqttClient::Connect() {
 }
 
 err_t MqttClient::Publish(
-    std::string_view topic, std::string_view message, Qos qos, bool retain) {
+    std::string_view topic, std::string_view message, Qos qos, bool retain,
+    std::function<void(err_t)> publish_result) {
   struct PublishCbData {
-    err_t result;
-    freertosxx::EventGroup event;
-  } cb_data;
+    std::function<void(err_t)> fn;
+  };
+
+  PublishCbData* cb_data;
+  if (publish_result != nullptr) {
+    cb_data = new PublishCbData(PublishCbData{publish_result});
+  }
+
   LOCK_TCPIP_CORE();
   err_t err = mqtt_publish(
       client_.get(),
@@ -121,19 +127,17 @@ err_t MqttClient::Publish(
       static_cast<uint8_t>(qos),
       retain ? 1 : 0,
       +[](void* arg, err_t err) {
-        PublishCbData* data = static_cast<PublishCbData*>(arg);
-        data->result = err;
-        data->event.Set(1);
+        std::unique_ptr<PublishCbData> cb_data(
+            static_cast<PublishCbData*>(arg));
+        cb_data->fn(err);
       },
-      &cb_data);
+      cb_data);
   UNLOCK_TCPIP_CORE();
   if (err != ERR_OK) {
-    printf(
-        "Error publishing message to %s: %s\n", topic.data(), lwip_strerr(err));
+    delete cb_data;
     return err;
   }
-  cb_data.event.Wait(1);
-  return cb_data.result;
+  return err;
 }
 
 err_t MqttClient::Subscribe(
