@@ -11,6 +11,8 @@
 #include <cstdio>
 #include <string>
 
+#include "pico/platform.h"
+
 namespace jagspico {
 
 // Calls sprintf, but prints into a dynamically allocated string.
@@ -33,26 +35,25 @@ std::string ssprintf(const char* fmt, Args&&... args) {
 
 template <typename... Args>
 void ssappendf(std::string& s, const char* fmt, Args&&... args) {
-  std::size_t size_before = s.size();
-  printf("%*s %d\n", s.size(), s.c_str(), s.size());
+  const std::size_t size_before = s.size();
   s.resize(s.capacity());
   const std::size_t print_capacity = s.size() - size_before;
-  const int want_cap =
-      snprintf(&s.data()[size_before], print_capacity, fmt, args...) + 1;
-  printf("%*s %d\n", s.size(), s.c_str(), s.size());
-  if (want_cap >= print_capacity) {
-    // The print had to stop early. Resize the string and print again.
-    s.resize(size_before + want_cap);
-    snprintf(&s.data()[size_before], want_cap, fmt, args...);
-    printf("reprinted: ");
-    printf(fmt, args...);
-    printf("\n%*s\n", s.size(), s.c_str());
+  // We have to make a little fib to snprintf. The C++ buffer always ends with
+  // nul, but that nul is not included in the capacity of the buffer. snprintf
+  // will write a terminating nul instead of a desired character if it thinks
+  // it's out of space. So we tell it there's one more spot than there really
+  // is, understanding that snprintf will do no harm here other than writing
+  // a null, which is what's already there.
+  const int chars_to_print =
+      snprintf(&s.data()[size_before], print_capacity + 1, fmt, args...);
+  if (chars_to_print < 0) {
+    panic("encoding error during snprintf %s", fmt);
   }
-  s[size_before + want_cap] = '\0';
-  s.resize(size_before + want_cap - 1);
-  printf("would have printed: ");
-  printf(fmt, args...);
-  printf("\n%*s\n", s.size(), s.c_str());
+  s.resize(size_before + chars_to_print);
+  if (chars_to_print > print_capacity) {
+    // The print had to stop early last time, so we need to redo the print.
+    snprintf(&s.data()[size_before], chars_to_print + 1, fmt, args...);
+  }
 }
 
 }  // namespace jagspico
