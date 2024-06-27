@@ -113,7 +113,7 @@ err_t MqttClient::Publish(
     std::function<void(err_t)> fn;
   };
 
-  PublishCbData* cb_data;
+  PublishCbData* cb_data = nullptr;
   if (publish_result != nullptr) {
     cb_data = new PublishCbData(PublishCbData{publish_result});
   }
@@ -129,11 +129,12 @@ err_t MqttClient::Publish(
       +[](void* arg, err_t err) {
         std::unique_ptr<PublishCbData> cb_data(
             static_cast<PublishCbData*>(arg));
-        cb_data->fn(err);
+        if (cb_data) cb_data->fn(err);
       },
       cb_data);
   UNLOCK_TCPIP_CORE();
   if (err != ERR_OK) {
+    printf("got err shouldn't be runnign callback\n");
     delete cb_data;
     return err;
   }
