@@ -1,3 +1,6 @@
+#ifndef FREERTOSXX_EVENT_H
+#define FREERTOSXX_EVENT_H
+
 #include <optional>
 
 #include "FreeRTOS.h"
@@ -75,3 +78,5 @@ class StaticEventGroup : public EventGroup {
 };
 
 }  // namespace freertosxx
+
+#endif  // FREERTOSXX_EVENT_H
