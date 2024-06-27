@@ -1,6 +1,8 @@
 #include "homeassistant/homeassistant.h"
 
+#include "lwipxx/mqtt.h"
 #include "pico/platform.h"
+#include "pico/time.h"
 #include "util/ssprintf.h"
 
 namespace homeassistant {
@@ -34,8 +36,6 @@ void AddAvailabilityDiscovery(JsonBuilder& json) {
 }
 
 std::string DeviceRootTopic(const CommonDeviceInfo& info) {
-  printf(
-      "homeassistant/%s/%s\n", info.component->data(), info.unique_id.data());
   return jagspico::ssprintf(
       "homeassistant/%s/%s", info.component->data(), info.unique_id.data());
 }
@@ -43,10 +43,8 @@ std::string DeviceRootTopic(const CommonDeviceInfo& info) {
 std::string AbsoluteChannel(
     const CommonDeviceInfo& info, std::string_view suffix) {
   std::string topic = DeviceRootTopic(info);
-  printf("%*s %d\n", topic.size(), topic.c_str(), topic.size());
   topic.append("/");
   topic.append(suffix);
-  printf("%*s %d\n", topic.size(), topic.c_str(), topic.size());
   return topic;
 }
 
@@ -55,12 +53,26 @@ std::string RelativeChannel(std::string_view suffix) {
 }
 
 void PublishAvailable(lwipxx::MqttClient& client) {
-  if (ERR_OK != client.Publish(
-                    AvailabilityTopic(),
-                    kOnlinePayload,
-                    lwipxx::MqttClient::Qos::kBestEffort,
-                    true)) {
-    panic("unable to publish initial availability message");
+  while (ERR_OK != client.Publish(
+                       AvailabilityTopic(),
+                       kOnlinePayload,
+                       lwipxx::MqttClient::Qos::kBestEffort,
+                       true)) {
+    printf("unable to publish initial availability message, retrying\n");
+    sleep_ms(5000);
+  }
+}
+
+void PublishDiscovery(
+    lwipxx::MqttClient& client, const CommonDeviceInfo& device_info,
+    std::string_view discovery_message) {
+  while (ERR_OK != client.Publish(
+                       AbsoluteChannel(device_info, topic_suffix::kDiscovery),
+                       discovery_message,
+                       lwipxx::MqttClient::kAtLeastOnce,
+                       true)) {
+    printf("unable to publish discovery message, retrying\n");
+    sleep_ms(5000);
   }
 }
 

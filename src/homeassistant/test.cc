@@ -62,14 +62,7 @@ extern "C" void main_task(void* arg) {
   };
 
   PublishAvailable(mqtt_client);
-
-  if (ERR_OK != mqtt_client.Publish(
-                    AbsoluteChannel(device_info, "config"),
-                    discovery_message,
-                    lwipxx::MqttClient::kAtLeastOnce,
-                    true)) {
-    panic("unable to publish discovery message\n");
-  }
+  PublishDiscovery(mqtt_client, device_info, discovery_message);
 
   // Cycle through the states.
   std::string state_chan = AbsoluteChannel(device_info, topic_suffix::kState);

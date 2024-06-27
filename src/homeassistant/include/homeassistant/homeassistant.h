@@ -105,6 +105,12 @@ struct CommonDeviceInfo {
   // E.g. "awning" "door" "battery" "humidity" etc.
   std::optional<std::string_view> device_class;
 };
+
+// Publishes a retained discovery message about this device.
+void PublishDiscovery(
+    lwipxx::MqttClient& client, const CommonDeviceInfo& device_info,
+    std::string_view discovery_message);
+
 void AddCommonInfo(const CommonDeviceInfo& info, JsonBuilder& builder);
 
 std::string DeviceRootTopic(const CommonDeviceInfo& info);
@@ -117,6 +123,7 @@ std::string RelativeChannel(std::string_view suffix);
 void AddCoverInfo(const CommonDeviceInfo& info, JsonBuilder& builder);
 
 namespace topic_suffix {
+constexpr std::string_view kDiscovery = "config";
 constexpr std::string_view kCommand = "cmd";
 constexpr std::string_view kState = "sta";
 }  // namespace topic_suffix
