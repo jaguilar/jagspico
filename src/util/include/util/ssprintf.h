@@ -34,22 +34,25 @@ std::string ssprintf(const char* fmt, Args&&... args) {
 template <typename... Args>
 void ssappendf(std::string& s, const char* fmt, Args&&... args) {
   std::size_t size_before = s.size();
+  printf("%*s %d\n", s.size(), s.c_str(), s.size());
   s.resize(s.capacity());
   const std::size_t print_capacity = s.size() - size_before;
-  const int want_to_print = snprintf(
-      &s.data()[size_before], print_capacity, fmt, std::forward<Args>(args)...);
-  if (want_to_print > print_capacity) {
+  const int want_cap =
+      snprintf(&s.data()[size_before], print_capacity, fmt, args...) + 1;
+  printf("%*s %d\n", s.size(), s.c_str(), s.size());
+  if (want_cap >= print_capacity) {
     // The print had to stop early. Resize the string and print again.
-    s.resize(size_before + want_to_print);
-    snprintf(
-        &s.data()[size_before],
-        want_to_print,
-        fmt,
-        std::forward<Args>(args)...);
-  } else {
-    // Resize so that only the modified characters are in the string.
-    s.resize(size_before + want_to_print);
+    s.resize(size_before + want_cap);
+    snprintf(&s.data()[size_before], want_cap, fmt, args...);
+    printf("reprinted: ");
+    printf(fmt, args...);
+    printf("\n%*s\n", s.size(), s.c_str());
   }
+  s[size_before + want_cap] = '\0';
+  s.resize(size_before + want_cap - 1);
+  printf("would have printed: ");
+  printf(fmt, args...);
+  printf("\n%*s\n", s.size(), s.c_str());
 }
 
 }  // namespace jagspico
