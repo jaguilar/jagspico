@@ -1,5 +1,7 @@
 #include "homeassistant/homeassistant.h"
 
+#include <string_view>
+
 #include "lwipxx/mqtt.h"
 #include "pico/platform.h"
 #include "pico/time.h"
@@ -96,6 +98,15 @@ void AddCoverInfo(const CommonDeviceInfo& info, JsonBuilder& builder) {
   builder.Kv("state_stopped", cover_payloads::kStoppedState);
   builder.Kv("optimistic", false);
   builder.Kv("retain", true);
+}
+
+void AddSensorInfo(
+    const CommonDeviceInfo& info, std::string_view unit_of_measurement,
+    JsonBuilder& builder) {
+  builder.Kv("state_topic", RelativeChannel(topic_suffix::kState));
+  builder.Kv("unit_of_measurement", unit_of_measurement);
+  builder.Kv("force_update", true);
+  builder.Kv("state_class", "measurement");
 }
 
 }  // namespace homeassistant

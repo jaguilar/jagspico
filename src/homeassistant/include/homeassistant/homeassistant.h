@@ -46,6 +46,10 @@ class JsonBuilder {
     want_sep = true;
   }
 
+  void Kv(std::string_view key, const char* text) {
+    Kv(key, std::string_view(text));
+  }
+
   void Kv(std::string_view key, bool b) {
     Key(key);
     json_.append(b ? "true" : "false");
@@ -121,6 +125,9 @@ std::string AbsoluteChannel(
 std::string RelativeChannel(std::string_view suffix);
 
 void AddCoverInfo(const CommonDeviceInfo& info, JsonBuilder& builder);
+void AddSensorInfo(
+    const CommonDeviceInfo& info, std::string_view unit_of_measurement,
+    JsonBuilder& builder);
 
 namespace topic_suffix {
 constexpr std::string_view kDiscovery = "config";
