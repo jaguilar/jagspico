@@ -126,8 +126,8 @@ std::string RelativeChannel(std::string_view suffix);
 
 void AddCoverInfo(const CommonDeviceInfo& info, JsonBuilder& builder);
 void AddSensorInfo(
-    const CommonDeviceInfo& info, std::string_view unit_of_measurement,
-    JsonBuilder& builder);
+    const CommonDeviceInfo& info,
+    std::optional<std::string_view> unit_of_measurement, JsonBuilder& builder);
 
 namespace topic_suffix {
 constexpr std::string_view kDiscovery = "config";

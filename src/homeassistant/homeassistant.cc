@@ -101,10 +101,12 @@ void AddCoverInfo(const CommonDeviceInfo& info, JsonBuilder& builder) {
 }
 
 void AddSensorInfo(
-    const CommonDeviceInfo& info, std::string_view unit_of_measurement,
-    JsonBuilder& builder) {
+    const CommonDeviceInfo& info,
+    std::optional<std::string_view> unit_of_measurement, JsonBuilder& builder) {
   builder.Kv("state_topic", RelativeChannel(topic_suffix::kState));
-  builder.Kv("unit_of_measurement", unit_of_measurement);
+  if (unit_of_measurement) {
+    builder.Kv("unit_of_measurement", *unit_of_measurement);
+  }
   builder.Kv("force_update", true);
   builder.Kv("state_class", "measurement");
 }
