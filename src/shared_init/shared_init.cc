@@ -3,18 +3,20 @@
 #include <FreeRTOS.h>
 
 #include "FreeRTOSConfig.h"
-#include "pico/platform.h"
-#ifdef RASPBERRYPI_PICO_W
-#include "cyw43_country.h"
-#include "cyw43_ll.h"
-#include "pico/cyw43_arch.h"
-#endif
+#include "hardware/watchdog.h"
 #include "pico/multicore.h"
+#include "pico/platform.h"
 #include "pico/printf.h"
 #include "pico/stdlib.h"
 #include "portmacro.h"
 #include "projdefs.h"
 #include "task.h"
+
+#ifdef RASPBERRYPI_PICO_W
+#include "cyw43_country.h"
+#include "cyw43_ll.h"
+#include "pico/cyw43_arch.h"
+#endif
 
 #if LWIP_MDNS_RESPONDER
 #include "lwip/apps/mdns.h"
@@ -60,6 +62,27 @@ void vApplicationGetPassiveIdleTaskMemory(
 }
 #endif
 
+#if !defined(SUPPRESS_WATCHDOG_ON_TICK)
+#define SUPPRESS_WATCHDOG_ON_TICK 0
+#endif
+
+constexpr bool kWatchdogUpdateOnTick =
+    configUSE_TICK_HOOK == 1 && !SUPPRESS_WATCHDOG_ON_TICK;
+
+#if (configUSE_TICK_HOOK == 1)
+void vApplicationTickHook(void) {
+  if constexpr (kWatchdogUpdateOnTick) watchdog_update();
+}
+
+void MaybeSetupWatchdogOnTick() {
+  if constexpr (kWatchdogUpdateOnTick) {
+    // After 20 tick interrupts pass without an application tick hook, we'll
+    // reboot. Basically a disaster has happened and we need to reboot.
+    watchdog_enable(pdTICKS_TO_MS(20), true);
+  }
+}
+#endif
+
 static TaskHandle_t g_init_task;
 
 #if LWIP_MDNS_RESPONDER
@@ -79,6 +102,8 @@ static void mdns_example_report(
 #endif
 
 static void init_task(void *arg) {
+  MaybeSetupWatchdogOnTick();
+
   printf("will initialize wifi\n");
 
 #ifdef RASPBERRYPI_PICO_W

@@ -25,6 +25,7 @@ target_link_libraries(common PUBLIC
     lwip
     pico_stdlib
     pico_sync
+    hardware_watchdog
 )
 target_compile_options(
     common 
@@ -35,6 +36,7 @@ target_link_libraries(common_nonet PUBLIC
     freertos_default
     pico_stdlib
     pico_sync
+    hardware_watchdog
 )
 if("${PICO_BOARD}" STREQUAL "pico_w")
   target_link_libraries(common_nonet PUBLIC pico_cyw43_arch_none)    
