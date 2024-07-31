@@ -194,7 +194,7 @@ class OwnerBorrowable {
  public:
   template <typename... Args>
   OwnerBorrowable(std::in_place_t, Args&&... args) {
-    value_ = std::make_unique<T>(std::forward<Args>(args)...);
+    value_ = T{std::forward<Args>(args)...};
   }
   explicit OwnerBorrowable(std::unique_ptr<T> value)
       : value_(std::move(value)) {}
