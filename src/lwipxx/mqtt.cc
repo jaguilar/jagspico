@@ -85,7 +85,7 @@ void MqttClient::Connect() {
       .client_id = connect_info_.client_id.c_str(),
       .client_user = connect_info_.user.c_str(),
       .client_pass = connect_info_.password.c_str(),
-      .keep_alive = 60,
+      .keep_alive = connect_info_.keepalive,
       .will_topic = connect_info_.lwt_topic.c_str(),
       .will_msg = connect_info_.lwt_message.c_str(),
       .will_qos = 0,

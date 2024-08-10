@@ -38,6 +38,7 @@ class MqttClient {
     std::string lwt_message;
     Qos lwt_qos = kBestEffort;
     bool lwt_retain = true;
+    uint16_t keepalive = 30;
   };
 
   static std::expected<std::unique_ptr<MqttClient>, err_t> Create(
